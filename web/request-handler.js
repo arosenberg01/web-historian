@@ -1,4 +1,5 @@
 var path = require('path');
+var qs = require('querystring');
 var archive = require('../helpers/archive-helpers');
 var fs = require('fs');
 var url = require('url');
@@ -10,32 +11,47 @@ var sendResponse = httpHelpers.sendResponse;
 
 var actions = {
   'GET': function(req, res){
+    var requestSent = false;
     var reqPath = url.parse(req.url).pathname;
     if (reqPath === '/') {
       fs.readFile(path.join(__dirname,"/public","index.html"),function(err,data) {
         sendResponse(res, data, 200);
-
+        requestSent = true;
       });
       return;
     }
+    if (requestSent) { return; }
     fs.readFile(path.join(__dirname,"/public",url.parse(req.url).pathname),function(err,data) {
       if(err) {
         console.log("Could not find requested file in /public");
-        sendResponse(res, null, 404);
       } else {
-        sendResponse(res, data, 200)
+        sendResponse(res, data, 200);
+        requestSent = true;
         console.log("Found requested file in /public, serving it");
         return;
       }
     });
 
+    if (requestSent) { return; }
 
-    // if URL = "/*" but not another /
-      //  if file exists in web/public, serve it
-      //  else, respond with 404.
+    console.log("Responding 404: something is wrong!")
+    sendResponse(res, null, 404);
   },
   'POST': function(req, res){
-    sendResponse(res, {}, 200);
+    var data = '';
+    req.on('data', function(chunk) {
+      data += chunk;
+    });
+
+    req.on('end', function() {
+      fs.appendFile(archive.paths.list, qs.parse(data).url + "\n", function(err) {
+        if (err) {
+          sendResponse(res, null, 500);
+        } else {
+          sendResponse(res, null, 302);
+        }
+      });
+    });
   },
   'OPTIONS': function(req, res){
     sendResponse(res);
