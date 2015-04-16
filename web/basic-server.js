@@ -1,10 +1,10 @@
 var http = require("http");
 var handler = require("./request-handler");
-// var initialize = require("./initialize.js"); // fuck initialize
+var initialize = require("./initialize.js"); // fuck initialize
 
 // Why do you think we have this here?
 // HINT:It has to do with what's in .gitignore
-// initialize();
+initialize();
 
 var port = 8080;
 var ip = "127.0.0.1";

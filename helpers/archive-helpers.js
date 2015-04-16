@@ -11,8 +11,8 @@ var _ = require('underscore');
 
 exports.paths = {
   'siteAssets' : path.join(__dirname, '../web/public'),
-  'archivedSites' : path.join(__dirname, '../archives/sites'),
-  'list' : path.join(__dirname, '../archives/sites.txt')
+  'archivedSites' : path.join(__dirname, '../web/archives/sites'),
+  'list' : path.join(__dirname, '../web/archives/sites.txt')
 };
 
 // Used for stubbing paths for jasmine tests, do not modify
@@ -24,30 +24,62 @@ exports.initialize = function(pathsObj){
 
 // The following function names are provided to you to suggest how you might
 // modularize your code. Keep it clean!
+//
 
-exports.readListOfUrls = function(){
-  var returnable = {};
-  fs.readFile(exports.paths.list, function(err, data) {
+// worker uses this
+exports.readListOfUrls = function(callback){
+  fs.readFile(exports.paths.archivedSites, function(err, data) {
     if (err) { console.log ("Error: " + err)
     } else {
       var urlArray = data.split('\n');
       returnable.results = urlArray;
+      callback(returnable);
     }
-
-
   });
-// idea below
-//  return async(workFunc,anotherFunc,lastFunc);
 };
 
-exports.isUrlInList = function(){
+// POST request handler uses this
+exports.isUrlInList = function(url, callback){
+
 };
 
-exports.addUrlToList = function(){
+// POST request handler uses this
+exports.addUrlToList = function(data){
+  fs.appendFile(archive.paths.list, qs.parse(data).url + "\n", function(err) {
+  });
 };
 
-exports.isURLArchived = function(){
+// POST request handler uses this
+exports.isURLArchived = function(hostname, callback){
+  fs.readFile(path.join(exports.paths.archivedSites, hostname), function(err, file) {
+    if (err) {
+      callback(false);
+    }
+    else {
+      callback(true);
+    }
+  });
+
+  // returns a boolean
 };
 
+// worker uses this
 exports.downloadUrls = function(){
 };
+
+// exports.censorURL = function(str) {
+//   var returnable = str;
+//   while(returnable.indexOf("/") > -1) {
+//     returnable = returnable.replace('/', '|');
+//   }
+//   return returnable;
+// };
+
+// exports.uncensorURL = function(str) {
+//   var returnable = str;
+//   while(returnable.indexOf("|") > -1) {
+//     returnable = returnable.replace('|', '/');
+//   }
+//   return returnable;
+// };
+

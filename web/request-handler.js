@@ -44,13 +44,26 @@ var actions = {
     });
 
     req.on('end', function() {
-      fs.appendFile(archive.paths.list, qs.parse(data).url + "\n", function(err) {
-        if (err) {
-          sendResponse(res, null, 500);
+      var targetHost = url.parse(qs.parse(data).url).hostname;
+      archive.isURLArchived(targetHost, function(fileExists) {
+      // if isURLArchived === true
+        if (fileExists) {
+          res.writeHead(301, {"Location": "/"}) // FIXXXXX
+          sendResponse(res, null, 301);
+          // send 301 to archived page
         } else {
-          sendResponse(res, null, 302);
+          //  if isURLInList === true
+          archive.isUrlInList(targetHost, function(isInList) {
+            if (isInList) {
+              res.writeHead(301, {"Location": "/"});
+              sendResponse(res, null, 301);
+              // 301 loading.html
+            } else {
+              // addUrlToList
+            }
+          });
         }
-      });
+      })
     });
   },
   'OPTIONS': function(req, res){
