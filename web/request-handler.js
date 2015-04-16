@@ -11,31 +11,37 @@ var sendResponse = httpHelpers.sendResponse;
 
 var actions = {
   'GET': function(req, res){
-    var requestSent = false;
+
     var reqPath = url.parse(req.url).pathname;
+    console.log(reqPath);
+
     if (reqPath === '/') {
+      console.log("Handling / request");
       fs.readFile(path.join(__dirname,"/public","index.html"),function(err,data) {
         sendResponse(res, data, 200);
-        requestSent = true;
       });
-      return;
+
     }
-    if (requestSent) { return; }
-    fs.readFile(path.join(__dirname,"/public",url.parse(req.url).pathname),function(err,data) {
-      if(err) {
-        console.log("Could not find requested file in /public");
-      } else {
-        sendResponse(res, data, 200);
-        requestSent = true;
-        console.log("Found requested file in /public, serving it");
-        return;
-      }
-    });
 
-    if (requestSent) { return; }
+    if (new RegExp('\/archives\/.+').test(reqPath)) {
+      console.log("Handling /archive/* request");
+      // var siteToGet =
+      // fs.readFile(path.join())
+    }
 
-    console.log("Responding 404: something is wrong!")
-    sendResponse(res, null, 404);
+    if(new RegExp(/^\/[^\/]+$/gm).test(reqPath) && reqPath !== "/") {
+      fs.readFile(path.join(__dirname,"/public",url.parse(req.url).pathname),function(err,data) {
+        if(!err) {
+          sendResponse(res, data, 200);
+          console.log("Found requested file in /public, serving it");
+          return;
+        } else {
+          // check in archives
+          console.log("Could not find requested file in /public");
+          sendResponse(res, null, 404);
+        }
+      });
+    }
   },
   'POST': function(req, res){
     var data = '';
@@ -44,7 +50,11 @@ var actions = {
     });
 
     req.on('end', function() {
+
+      var urlString = qs.parse(data).url;
+
       var targetHost = url.parse(qs.parse(data).url).hostname;
+      console.log(targetHost + ": " + typeof targetHost)
       archive.isURLArchived(targetHost, function(fileExists) {
       // if isURLArchived === true
         if (fileExists) {
@@ -60,6 +70,9 @@ var actions = {
               // 301 loading.html
             } else {
               // addUrlToList
+              archive.addUrlToList(targetHost, function() {
+
+              })
             }
           });
         }
